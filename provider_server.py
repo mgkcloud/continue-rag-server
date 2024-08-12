@@ -91,18 +91,19 @@ async def get_context(request: Request):
         retriever = index.as_retriever(similarity_top_k=2)
         nodes = retriever.retrieve(fullInput)
 
-        # Create individual context items from retrieved nodes
-        context_items = []
-        for i, node in enumerate(nodes):
-            context_items.append({
-                "name": f"Result {i+1}",
-                "description": f"Result {i+1} from Vector DB",
-                "content": node.text
-            })
+        # Aggregate content from retrieved nodes
+        aggregated_content = "\n\n".join([node.text for node in nodes])
 
-        print(f"Query response: {context_items}")
+        # Return a single object with aggregated content
+        response_data = {
+            "name": "Context from VectorDB",
+            "description": "Aggregated results from Vector DB",
+            "content": aggregated_content
+        }
 
-        return context_items
+        print(f"Query response: {response_data}")
+
+        return response_data
 
     except HTTPException as e:
         raise e
