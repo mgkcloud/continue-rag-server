@@ -5,6 +5,7 @@ from llama_index.vector_stores.redis import RedisVectorStore
 from redisvl.schema import IndexSchema
 from llama_index.readers.google import GoogleDriveReader
 from dotenv import load_dotenv
+import os
 
 # Load environment variables from .env file
 load_dotenv()
