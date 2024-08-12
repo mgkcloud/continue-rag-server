@@ -4,7 +4,10 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.redis import RedisVectorStore
 from redisvl.schema import IndexSchema
 from llama_index.readers.google import GoogleDriveReader
-import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = FastAPI()
 
@@ -51,7 +54,7 @@ def configure_settings():
     )
 
 def load_data_from_gdrive(folder_id: str):
-    loader = GoogleDriveReader(redirect_uri="https://supa.centaur-cloud.ts.net:8000/callback")
+    loader = GoogleDriveReader(redirect_uri=os.getenv("GDRIVE_REDIRECT_URI"))
     docs = loader.load_data(folder_id=folder_id)
     for doc in docs:
         print(doc.metadata)
@@ -69,7 +72,7 @@ def create_index(docs):
 async def startup_event():
     try:
         configure_settings()
-        docs = load_data_from_gdrive(folder_id="1Izmoxq101l_so1g9V948iR0u67iMzN_V")
+        docs = load_data_from_gdrive(folder_id=os.getenv("GDRIVE_FOLDER_ID"))
         create_index(docs)
     except Exception as e:
         print(f"Error during startup: {e}")
