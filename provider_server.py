@@ -1,6 +1,8 @@
 import logging
 import os
 import asyncio
+import re
+
 from typing import List
 from contextlib import asynccontextmanager
 from functools import lru_cache
@@ -27,6 +29,7 @@ def get_env_variables():
         "GDRIVE_FOLDER_ID": os.getenv("GDRIVE_FOLDER_ID"),
         "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY"),
         "REDIS_URL": os.getenv("REDIS_URL"),
+        "CHUNK_SIZE": int(os.getenv("CHUNK_SIZE", 512)) # Get chunk size from env
     }
 
 get_env_variables.cache_clear()
@@ -85,7 +88,7 @@ def configure_settings():
     )
 
     pipeline = IngestionPipeline(
-        transformations=[SentenceSplitter(), embed_model],
+        transformations=[SentenceSplitter(chunk_size=env_vars["CHUNK_SIZE"]), embed_model],
         docstore=RedisDocumentStore.from_host_and_port("localhost", 6379, namespace="document_store"),
         vector_store=vector_store,
         cache=cache,
@@ -185,7 +188,8 @@ async def get_context(request: Request):
         nodes = retriever.retrieve(fullInput)
 
         # Aggregate content from retrieved nodes
-        aggregated_content = "\n\n".join([node.text for node in nodes])
+        aggregated_content = "".join([node.text.strip() for node in nodes])
+        aggregated_content = re.sub(r'\n+', ' ', aggregated_content)
 
         # Return a single object with aggregated content
         response_data = {
